@@ -9,12 +9,13 @@ import { GroupStandingsPanel } from "@/components/standings/GroupStandingsPanel"
 import { computeGroupStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
 
-export default function GroupsPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function GroupsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
   const settings = parseTournamentSettings(tournament.settings);
-  const enrollments = enrollmentsByTournament(params.id).filter((e) => e.groupName);
+  const enrollments = enrollmentsByTournament(id).filter((e) => e.groupName);
   const groupEnrollments = enrollments.map((e) => ({
     teamId: e.teamId,
     teamName: TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId,
@@ -22,7 +23,7 @@ export default function GroupsPage({ params }: { params: { id: string } }) {
   }));
   const teamLinks = Object.fromEntries(enrollments.map((e) => [e.teamId, `/teams/${e.teamId}`]));
 
-  const groupMatches: MatchRow[] = matchesByTournament(params.id)
+  const groupMatches: MatchRow[] = matchesByTournament(id)
     .filter((m) => m.stage === "GROUP")
     .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
 
@@ -32,7 +33,7 @@ export default function GroupsPage({ params }: { params: { id: string } }) {
   const allPlayed =
     groupMatches.length > 0 &&
     groupMatches.every((m) => m.status === "PLAYED" || m.status === "CANCELLED");
-  const hasKnockout = matchesByTournament(params.id).some((m) => m.stage === "KNOCKOUT");
+  const hasKnockout = matchesByTournament(id).some((m) => m.stage === "KNOCKOUT");
 
   const teamsAdvancing = settings.teamsAdvancingPerGroup ?? 2;
 
