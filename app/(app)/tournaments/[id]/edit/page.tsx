@@ -9,8 +9,9 @@ async function noopUpdate() {
   redirect("/tournaments");
 }
 
-export default function EditTournamentPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function EditTournamentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
   const settings = tournament.settings as Record<string, unknown>;

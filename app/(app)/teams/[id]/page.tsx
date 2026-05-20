@@ -22,8 +22,9 @@ const STATUS_VARIANTS: Record<string, "success" | "info" | "default"> = {
   DRAFT: "default",
 };
 
-export default function TeamDetailPage({ params }: { params: { id: string } }) {
-  const team = TEAMS.find((t) => t.id === params.id);
+export default async function TeamDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const team = TEAMS.find((t) => t.id === id);
   if (!team) notFound();
 
   const history = tournamentsByTeam(team.id).map(({ tournament: t }) => {

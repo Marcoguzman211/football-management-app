@@ -2,11 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { TOURNAMENTS, TOURNAMENT_TEAMS, TEAMS } from "@/lib/mock-data";
 
-export default function TournamentTeamsPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function TournamentTeamsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
-  const enrollments = TOURNAMENT_TEAMS.filter((tt) => tt.tournamentId === params.id).map((tt) => ({
+  const enrollments = TOURNAMENT_TEAMS.filter((tt) => tt.tournamentId === id).map((tt) => ({
     ...tt,
     team: TEAMS.find((t) => t.id === tt.teamId)!,
   }));

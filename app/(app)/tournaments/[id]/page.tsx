@@ -11,11 +11,10 @@ import { StandingsTable } from "@/components/standings/StandingsTable";
 import { computeStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
 
-export default function TournamentOverviewPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function TournamentOverviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
-
-  const id = params.id;
   const allMatches = matchesByTournament(id);
   const played = allMatches.filter((m) => m.status === "PLAYED").length;
   const total = allMatches.length;

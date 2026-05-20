@@ -3,23 +3,25 @@ import { TOURNAMENTS, TEAMS, matchesByTournament } from "@/lib/mock-data";
 import { ScoreEntryForm } from "@/components/fixtures/ScoreEntryForm";
 import { Badge } from "@/components/ui/Badge";
 
-export default function FixturesPage({
+export default async function FixturesPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { stage?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ stage?: string }>;
 }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+  const { id } = await params;
+  const { stage } = await searchParams;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
-  const teamName = (id: string) => TEAMS.find((t) => t.id === id)?.name ?? id;
-  const allMatches = matchesByTournament(params.id);
+  const teamName = (tid: string) => TEAMS.find((t) => t.id === tid)?.name ?? tid;
+  const allMatches = matchesByTournament(id);
 
   const hasGroup = allMatches.some((m) => m.stage === "GROUP");
   const hasKnockout = allMatches.some((m) => m.stage === "KNOCKOUT");
   const showTabs = tournament.format === "GROUP_KNOCKOUT";
-  const activeStage = searchParams.stage ?? (hasGroup ? "GROUP" : "KNOCKOUT");
+  const activeStage = stage ?? (hasGroup ? "GROUP" : "KNOCKOUT");
 
   const filteredMatches =
     showTabs ? allMatches.filter((m) => m.stage === activeStage) : allMatches;
