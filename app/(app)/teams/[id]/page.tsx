@@ -1,62 +1,36 @@
-import { auth } from "@/auth";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import {
+  TEAMS,
+  tournamentsByTeam,
+  matchesByTournament,
+  enrollmentsByTournament,
+} from "@/lib/mock-data";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { computeStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
-import { deleteTeam } from "@/actions/team";
 
-export default async function TeamDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const session = await auth();
-  if (!session) redirect("/login");
-
-  const { id } = await params;
-
-  const team = await prisma.team.findUnique({
-    where: { id },
-    include: {
-      tournaments: {
-        include: {
-          tournament: {
-            include: {
-              matches: true,
-              teams: { include: { team: true } },
-            },
-          },
-        },
-        orderBy: { tournament: { season: "desc" } },
-      },
-    },
-  });
+export default function TeamDetailPage({ params }: { params: { id: string } }) {
+  const team = TEAMS.find((t) => t.id === params.id);
   if (!team) notFound();
 
-  const history = team.tournaments.map((tt) => {
-    const t = tt.tournament;
+  const history = tournamentsByTeam(team.id).map(({ tournament: t, groupName }) => {
     const settings = parseTournamentSettings(t.settings);
-    const teams = t.teams.map((e) => ({ teamId: e.teamId, teamName: e.team.name }));
-    const matches: MatchRow[] = t.matches.map((m) => ({
-      id: m.id,
-      homeTeamId: m.homeTeamId,
-      awayTeamId: m.awayTeamId,
-      homeScore: m.homeScore,
-      awayScore: m.awayScore,
-      stage: m.stage as "GROUP" | "KNOCKOUT",
-      round: m.round,
-      status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED",
+    const rawMatches = matchesByTournament(t.id);
+    const enrollments = enrollmentsByTournament(t.id);
+    const teamList = enrollments.map((e) => ({
+      teamId: e.teamId,
+      teamName: TEAMS.find((tm) => tm.id === e.teamId)?.name ?? e.teamId,
     }));
-    const standings = computeStandings(matches, teams, settings);
-    const position = standings.findIndex((s) => s.teamId === id) + 1;
-    const standing = standings.find((s) => s.teamId === id);
-    return { tournament: t, position: position || null, standing };
+    const groupMatches: MatchRow[] = rawMatches
+      .filter((m) => m.stage === "GROUP")
+      .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
+    const standings = computeStandings(groupMatches, teamList, settings);
+    const position = standings.findIndex((s) => s.teamId === team.id) + 1;
+    const standing = standings.find((s) => s.teamId === team.id);
+    return { tournament: t, groupName, position: position || null, standing };
   });
-
-  const deleteAction = deleteTeam.bind(null, id);
 
   return (
     <>
@@ -64,12 +38,9 @@ export default async function TeamDetailPage({
         title={team.name}
         action={
           <div className="flex gap-2">
-            <Link href={`/teams/${id}/edit`}>
+            <Link href={`/teams/${team.id}/edit`}>
               <Button variant="secondary">Edit</Button>
             </Link>
-            <form action={deleteAction}>
-              <Button variant="danger" type="submit">Delete</Button>
-            </form>
           </div>
         }
       />
@@ -78,7 +49,7 @@ export default async function TeamDetailPage({
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Tournament History</h2>
           {history.length === 0 ? (
-            <p className="text-gray-400 text-sm">Not enrolled in any tournaments yet.</p>
+            <p className="text-gray-400 text-sm">No tournaments found.</p>
           ) : (
             <div className="rounded-xl border border-gray-200 overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200" aria-label={`${team.name} history`}>

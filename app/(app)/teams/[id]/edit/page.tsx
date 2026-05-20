@@ -1,30 +1,24 @@
-import { auth } from "@/auth";
-import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { TEAMS } from "@/lib/mock-data";
 import { TeamForm } from "@/components/teams/TeamForm";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { updateTeam } from "@/actions/team";
 
-export default async function EditTeamPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const session = await auth();
-  if (!session) redirect("/login");
+async function noopUpdate() {
+  "use server";
+  const { redirect } = await import("next/navigation");
+  redirect("/teams");
+}
 
-  const { id } = await params;
-  const team = await prisma.team.findUnique({ where: { id } });
+export default function EditTeamPage({ params }: { params: { id: string } }) {
+  const team = TEAMS.find((t) => t.id === params.id);
   if (!team) notFound();
-
-  const action = updateTeam.bind(null, id);
 
   return (
     <>
-      <PageHeader title={`Edit ${team.name}`} />
+      <PageHeader title={`Edit ${team.name}`} subtitle="Demo mode — changes are not saved." />
       <div className="max-w-lg">
         <TeamForm
-          action={action}
+          action={noopUpdate}
           defaultValues={{ name: team.name, logoUrl: team.logoUrl }}
           submitLabel="Save Changes"
         />

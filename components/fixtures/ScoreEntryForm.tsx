@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { enterScore } from "@/actions/match";
 
 interface ScoreEntryFormProps {
   matchId: string;
@@ -14,7 +13,7 @@ interface ScoreEntryFormProps {
 }
 
 export function ScoreEntryForm({
-  matchId,
+  matchId: _matchId,
   homeTeamName,
   awayTeamName,
   currentHomeScore,
@@ -23,21 +22,15 @@ export function ScoreEntryForm({
 }: ScoreEntryFormProps) {
   const [home, setHome] = useState(currentHomeScore?.toString() ?? "");
   const [away, setAway] = useState(currentAwayScore?.toString() ?? "");
-  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const isPlayed = status === "PLAYED";
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const h = parseInt(home);
-    const a = parseInt(away);
-    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return;
-    setSaving(true);
-    try {
-      await enterScore(matchId, h, a);
-    } finally {
-      setSaving(false);
-    }
+    // Demo mode — simulate a save without a real DB call
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   }
 
   return (
@@ -63,9 +56,16 @@ export function ScoreEntryForm({
         className="w-14 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
       <span className="text-sm font-medium text-gray-700 min-w-28">{awayTeamName}</span>
-      <Button type="submit" variant={isPlayed ? "secondary" : "primary"} size="sm" disabled={saving}>
-        {saving ? "Saving…" : isPlayed ? "Update" : "Save"}
+      <Button
+        type="submit"
+        variant={isPlayed ? "secondary" : "primary"}
+        size="sm"
+      >
+        {saved ? "Saved! ✓" : isPlayed ? "Update" : "Save"}
       </Button>
+      {saved && (
+        <span className="text-xs text-amber-600">(demo — not persisted)</span>
+      )}
     </form>
   );
 }

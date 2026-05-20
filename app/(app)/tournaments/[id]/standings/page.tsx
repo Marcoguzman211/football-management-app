@@ -1,53 +1,35 @@
-import { auth } from "@/auth";
-import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { TOURNAMENTS, TEAMS, matchesByTournament, enrollmentsByTournament } from "@/lib/mock-data";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StandingsTable } from "@/components/standings/StandingsTable";
 import { computeStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
 
-export default async function StandingsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const session = await auth();
-  if (!session) redirect("/login");
-
-  const { id } = await params;
-
-  const tournament = await prisma.tournament.findUnique({
-    where: { id },
-    include: {
-      matches: true,
-      teams: { include: { team: true } },
-    },
-  });
+export default function StandingsPage({ params }: { params: { id: string } }) {
+  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
   if (!tournament) notFound();
 
   const settings = parseTournamentSettings(tournament.settings);
-  const teamList = tournament.teams.map((t) => ({
-    teamId: t.teamId,
-    teamName: t.team.name,
+  const enrollments = enrollmentsByTournament(params.id);
+  const teamList = enrollments.map((e) => ({
+    teamId: e.teamId,
+    teamName: TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId,
   }));
-  const matches: MatchRow[] = tournament.matches
+
+  const matches: MatchRow[] = matchesByTournament(params.id)
     .filter((m) => m.stage === "GROUP")
-    .map((m) => ({
-      id: m.id,
-      homeTeamId: m.homeTeamId,
-      awayTeamId: m.awayTeamId,
-      homeScore: m.homeScore,
-      awayScore: m.awayScore,
-      stage: "GROUP",
-      round: m.round,
-      status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED",
-    }));
+    .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
 
   const standings = computeStandings(matches, teamList, settings);
+  const played = matches.filter((m) => m.status === "PLAYED").length;
+  const total = matches.length;
 
   return (
     <>
-      <PageHeader title={`Standings — ${tournament.name}`} />
+      <PageHeader
+        title={`Standings — ${tournament.name}`}
+        subtitle={`After ${played} of ${total} matches`}
+      />
       <StandingsTable standings={standings} caption={`${tournament.name} standings`} />
     </>
   );

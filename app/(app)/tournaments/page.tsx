@@ -1,19 +1,14 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { TOURNAMENTS, TOURNAMENT_TEAMS } from "@/lib/mock-data";
 import { TournamentCard } from "@/components/tournaments/TournamentCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 
-export default async function TournamentsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-
-  const tournaments = await prisma.tournament.findMany({
-    orderBy: [{ season: "desc" }, { createdAt: "desc" }],
-    include: { _count: { select: { teams: true } } },
-  });
+export default function TournamentsPage() {
+  const tournaments = TOURNAMENTS.map((t) => ({
+    ...t,
+    teamCount: TOURNAMENT_TEAMS.filter((tt) => tt.tournamentId === t.id).length,
+  }));
 
   const active = tournaments.filter((t) => t.status === "ACTIVE");
   const draft = tournaments.filter((t) => t.status === "DRAFT");
@@ -33,7 +28,7 @@ export default async function TournamentsPage() {
               season={t.season}
               format={t.format}
               status={t.status}
-              teamCount={t._count.teams}
+              teamCount={t.teamCount}
             />
           ))}
         </div>
@@ -51,20 +46,9 @@ export default async function TournamentsPage() {
           </Link>
         }
       />
-      {tournaments.length === 0 ? (
-        <p className="text-center text-gray-400 py-12">
-          No tournaments yet.{" "}
-          <Link href="/tournaments/new" className="text-blue-600 hover:underline">
-            Create the first one.
-          </Link>
-        </p>
-      ) : (
-        <>
-          <Section title="Active" items={active} />
-          <Section title="Draft" items={draft} />
-          <Section title="Finished" items={finished} />
-        </>
-      )}
+      <Section title="Active" items={active} />
+      <Section title="Draft" items={draft} />
+      <Section title="Finished" items={finished} />
     </>
   );
 }

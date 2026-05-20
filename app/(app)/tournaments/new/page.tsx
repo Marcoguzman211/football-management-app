@@ -1,18 +1,18 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { TournamentForm } from "@/components/tournaments/TournamentForm";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { createTournament } from "@/actions/tournament";
 
-export default async function NewTournamentPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
+async function noopCreate() {
+  "use server";
+  const { redirect } = await import("next/navigation");
+  redirect("/tournaments");
+}
 
+export default function NewTournamentPage() {
   return (
     <>
-      <PageHeader title="New Tournament" />
+      <PageHeader title="New Tournament" subtitle="Demo mode — changes are not saved." />
       <div className="max-w-lg">
-        <TournamentForm action={createTournament} submitLabel="Create Tournament" />
+        <TournamentForm action={noopCreate} submitLabel="Create Tournament" />
       </div>
     </>
   );

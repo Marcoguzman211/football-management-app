@@ -1,32 +1,26 @@
-import { auth } from "@/auth";
-import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { TOURNAMENTS } from "@/lib/mock-data";
 import { TournamentForm } from "@/components/tournaments/TournamentForm";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { updateTournament } from "@/actions/tournament";
 
-export default async function EditTournamentPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const session = await auth();
-  if (!session) redirect("/login");
+async function noopUpdate() {
+  "use server";
+  const { redirect } = await import("next/navigation");
+  redirect("/tournaments");
+}
 
-  const { id } = await params;
-  const tournament = await prisma.tournament.findUnique({ where: { id } });
+export default function EditTournamentPage({ params }: { params: { id: string } }) {
+  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
   if (!tournament) notFound();
-  if (tournament.status !== "DRAFT") redirect(`/tournaments/${id}`);
 
-  const action = updateTournament.bind(null, id);
-  const settings = (tournament.settings ?? {}) as Record<string, unknown>;
+  const settings = tournament.settings as Record<string, unknown>;
 
   return (
     <>
-      <PageHeader title={`Edit ${tournament.name}`} />
+      <PageHeader title={`Edit ${tournament.name}`} subtitle="Demo mode — changes are not saved." />
       <div className="max-w-lg">
         <TournamentForm
-          action={action}
+          action={noopUpdate}
           defaultValues={{
             name: tournament.name,
             season: tournament.season,

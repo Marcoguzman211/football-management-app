@@ -1,25 +1,20 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { TEAMS, TOURNAMENT_TEAMS } from "@/lib/mock-data";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 
-export default async function TeamsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-
-  const teams = await prisma.team.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { tournaments: true } } },
-  });
+export default function TeamsPage() {
+  const teams = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name)).map((t) => ({
+    ...t,
+    tournamentCount: TOURNAMENT_TEAMS.filter((tt) => tt.teamId === t.id).length,
+  }));
 
   return (
     <>
       <PageHeader
         title="Teams"
-        subtitle={`${teams.length} team${teams.length !== 1 ? "s" : ""}`}
+        subtitle={`${teams.length} teams`}
         action={
           <Link href="/teams/new">
             <Button>New Team</Button>
@@ -33,17 +28,9 @@ export default async function TeamsPage() {
             id={team.id}
             name={team.name}
             logoUrl={team.logoUrl}
-            tournamentCount={team._count.tournaments}
+            tournamentCount={team.tournamentCount}
           />
         ))}
-        {teams.length === 0 && (
-          <p className="col-span-full text-center text-gray-400 py-12">
-            No teams yet.{" "}
-            <Link href="/teams/new" className="text-blue-600 hover:underline">
-              Create the first one.
-            </Link>
-          </p>
-        )}
       </div>
     </>
   );

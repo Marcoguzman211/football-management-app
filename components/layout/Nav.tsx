@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { auth, signOut } from "@/auth";
-import { Button } from "@/components/ui/Button";
 
-export async function Nav() {
-  const session = await auth();
-
+export function Nav() {
   return (
     <nav className="border-b border-gray-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -30,22 +26,16 @@ export async function Nav() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {session?.user && (
-              <span className="hidden sm:block text-sm text-gray-500">
-                {session.user.name}
-              </span>
-            )}
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/login" });
-              }}
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+              Demo mode — read only
+            </span>
+            <Link
+              href="/login"
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
-              <Button variant="ghost" size="sm" type="submit">
-                Sign out
-              </Button>
-            </form>
+              Sign in
+            </Link>
           </div>
 
           {/* Mobile menu */}
@@ -57,16 +47,10 @@ export async function Nav() {
                 </svg>
               </summary>
               <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50">
-                <Link
-                  href="/tournaments"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
+                <Link href="/tournaments" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Tournaments
                 </Link>
-                <Link
-                  href="/teams"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
+                <Link href="/teams" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Teams
                 </Link>
               </div>
