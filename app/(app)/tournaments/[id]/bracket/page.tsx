@@ -4,17 +4,18 @@ import { BracketView } from "@/components/bracket/BracketView";
 import { buildBracketTree } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
 
-export default function BracketPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function BracketPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
-  const enrollments = enrollmentsByTournament(params.id);
+  const enrollments = enrollmentsByTournament(id);
   const teamNames: Record<string, string> = {};
   for (const e of enrollments) {
     teamNames[e.teamId] = TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId;
   }
 
-  const knockoutMatches: MatchRow[] = matchesByTournament(params.id)
+  const knockoutMatches: MatchRow[] = matchesByTournament(id)
     .filter((m) => m.stage === "KNOCKOUT")
     .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
 

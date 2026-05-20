@@ -9,8 +9,9 @@ async function noopUpdate() {
   redirect("/teams");
 }
 
-export default function EditTeamPage({ params }: { params: { id: string } }) {
-  const team = TEAMS.find((t) => t.id === params.id);
+export default async function EditTeamPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const team = TEAMS.find((t) => t.id === id);
   if (!team) notFound();
 
   return (

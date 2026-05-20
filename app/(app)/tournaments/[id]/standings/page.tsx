@@ -4,19 +4,20 @@ import { StandingsTable } from "@/components/standings/StandingsTable";
 import { computeStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
 
-export default function StandingsPage({ params }: { params: { id: string } }) {
-  const tournament = TOURNAMENTS.find((t) => t.id === params.id);
+export default async function StandingsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tournament = TOURNAMENTS.find((t) => t.id === id);
   if (!tournament) notFound();
 
   const settings = parseTournamentSettings(tournament.settings);
-  const enrollments = enrollmentsByTournament(params.id);
+  const enrollments = enrollmentsByTournament(id);
   const teamList = enrollments.map((e) => ({
     teamId: e.teamId,
     teamName: TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId,
   }));
   const teamLinks = Object.fromEntries(enrollments.map((e) => [e.teamId, `/teams/${e.teamId}`]));
 
-  const matches: MatchRow[] = matchesByTournament(params.id)
+  const matches: MatchRow[] = matchesByTournament(id)
     .filter((m) => m.stage === "GROUP")
     .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
 
