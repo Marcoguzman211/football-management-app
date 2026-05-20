@@ -5,7 +5,6 @@ import {
   matchesByTournament,
   enrollmentsByTournament,
 } from "@/lib/mock-data";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { GroupStandingsPanel } from "@/components/standings/GroupStandingsPanel";
 import { computeGroupStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
@@ -21,6 +20,7 @@ export default function GroupsPage({ params }: { params: { id: string } }) {
     teamName: TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId,
     groupName: e.groupName!,
   }));
+  const teamLinks = Object.fromEntries(enrollments.map((e) => [e.teamId, `/teams/${e.teamId}`]));
 
   const groupMatches: MatchRow[] = matchesByTournament(params.id)
     .filter((m) => m.stage === "GROUP")
@@ -34,33 +34,66 @@ export default function GroupsPage({ params }: { params: { id: string } }) {
     groupMatches.every((m) => m.status === "PLAYED" || m.status === "CANCELLED");
   const hasKnockout = matchesByTournament(params.id).some((m) => m.stage === "KNOCKOUT");
 
+  const teamsAdvancing = settings.teamsAdvancingPerGroup ?? 2;
+
   return (
-    <>
-      <PageHeader
-        title={`Groups — ${tournament.name}`}
-        subtitle={
+    <div>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold text-gray-900">Group Stage</h2>
+        <span className={`text-sm px-3 py-1 rounded-full font-medium ${
           allPlayed && hasKnockout
-            ? "Group stage complete — knockout stage seeded."
+            ? "bg-green-100 text-green-700"
             : allPlayed
-            ? "All group matches played."
-            : "Group stage in progress."
-        }
-      />
+            ? "bg-blue-100 text-blue-700"
+            : "bg-yellow-100 text-yellow-700"
+        }`}>
+          {allPlayed && hasKnockout
+            ? "Knockout seeded"
+            : allPlayed
+            ? "All matches played"
+            : "In progress"}
+        </span>
+      </div>
 
       {groupNames.length === 0 ? (
-        <p className="text-gray-400 text-sm">No group assignments found.</p>
+        <p className="text-gray-400 text-sm py-8 text-center">No group assignments found.</p>
       ) : (
-        <div className="space-y-8">
+        <div className="grid gap-8 lg:grid-cols-2">
           {groupNames.map((g) => (
-            <GroupStandingsPanel
+            <GroupStandingsPanelWithLinks
               key={g}
               groupName={g}
               standings={groupStandings[g]}
-              teamsAdvancing={settings.teamsAdvancingPerGroup}
+              teamsAdvancing={teamsAdvancing}
+              teamLinks={teamLinks}
             />
           ))}
         </div>
       )}
-    </>
+    </div>
+  );
+}
+
+function GroupStandingsPanelWithLinks({
+  groupName,
+  standings,
+  teamsAdvancing,
+  teamLinks,
+}: {
+  groupName: string;
+  standings: import("@/lib/tournament/types").TeamStanding[];
+  teamsAdvancing: number;
+  teamLinks: Record<string, string>;
+}) {
+  return (
+    <div>
+      <h3 className="mb-3 text-base font-semibold text-gray-900">Group {groupName}</h3>
+      <GroupStandingsPanel
+        groupName={groupName}
+        standings={standings}
+        teamsAdvancing={teamsAdvancing}
+        teamLinks={teamLinks}
+      />
+    </div>
   );
 }

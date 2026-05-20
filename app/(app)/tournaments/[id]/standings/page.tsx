@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { TOURNAMENTS, TEAMS, matchesByTournament, enrollmentsByTournament } from "@/lib/mock-data";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { StandingsTable } from "@/components/standings/StandingsTable";
 import { computeStandings, parseTournamentSettings } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
@@ -15,6 +14,7 @@ export default function StandingsPage({ params }: { params: { id: string } }) {
     teamId: e.teamId,
     teamName: TEAMS.find((t) => t.id === e.teamId)?.name ?? e.teamId,
   }));
+  const teamLinks = Object.fromEntries(enrollments.map((e) => [e.teamId, `/teams/${e.teamId}`]));
 
   const matches: MatchRow[] = matchesByTournament(params.id)
     .filter((m) => m.stage === "GROUP")
@@ -25,12 +25,16 @@ export default function StandingsPage({ params }: { params: { id: string } }) {
   const total = matches.length;
 
   return (
-    <>
-      <PageHeader
-        title={`Standings — ${tournament.name}`}
-        subtitle={`After ${played} of ${total} matches`}
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">League Table</h2>
+        <span className="text-sm text-gray-500">{played} of {total} matches played</span>
+      </div>
+      <StandingsTable
+        standings={standings}
+        teamLinks={teamLinks}
+        caption={`${tournament.name} standings`}
       />
-      <StandingsTable standings={standings} caption={`${tournament.name} standings`} />
-    </>
+    </div>
   );
 }

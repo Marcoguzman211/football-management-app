@@ -1,12 +1,14 @@
+import Link from "next/link";
 import type { TeamStanding } from "@/lib/tournament/types";
 
 interface StandingsTableProps {
   standings: TeamStanding[];
   highlightTop?: number;
   caption?: string;
+  teamLinks?: Record<string, string>; // teamId → href
 }
 
-export function StandingsTable({ standings, highlightTop, caption }: StandingsTableProps) {
+export function StandingsTable({ standings, highlightTop, caption, teamLinks }: StandingsTableProps) {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200">
       <table className="min-w-full divide-y divide-gray-200" aria-label={caption ?? "Standings"}>
@@ -31,7 +33,15 @@ export function StandingsTable({ standings, highlightTop, caption }: StandingsTa
             return (
               <tr key={s.teamId} className={isHighlighted ? "bg-green-50" : ""}>
                 <td className="px-4 py-3 text-sm text-gray-500">{i + 1}</td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">{s.teamName}</td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  {teamLinks?.[s.teamId] ? (
+                    <Link href={teamLinks[s.teamId]} className="hover:text-blue-600 hover:underline">
+                      {s.teamName}
+                    </Link>
+                  ) : (
+                    s.teamName
+                  )}
+                </td>
                 <td className="px-3 py-3 text-center text-sm text-gray-700">{s.played}</td>
                 <td className="px-3 py-3 text-center text-sm text-gray-700">{s.won}</td>
                 <td className="px-3 py-3 text-center text-sm text-gray-700">{s.drawn}</td>

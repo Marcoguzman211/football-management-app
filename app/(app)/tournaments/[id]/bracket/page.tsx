@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { TOURNAMENTS, TEAMS, matchesByTournament, enrollmentsByTournament } from "@/lib/mock-data";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { BracketView } from "@/components/bracket/BracketView";
 import { buildBracketTree } from "@/lib/tournament";
 import type { MatchRow } from "@/lib/tournament";
@@ -19,23 +18,26 @@ export default function BracketPage({ params }: { params: { id: string } }) {
     .filter((m) => m.stage === "KNOCKOUT")
     .map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" | "CANCELLED" }));
 
+  const played = knockoutMatches.filter((m) => m.status === "PLAYED").length;
+  const total = knockoutMatches.length;
+
   if (knockoutMatches.length === 0) {
     return (
-      <>
-        <PageHeader title={`Bracket — ${tournament.name}`} />
-        <p className="text-gray-400 text-sm py-8 text-center">
-          No bracket data available yet.
-        </p>
-      </>
+      <div className="py-16 text-center">
+        <p className="text-gray-400">No bracket data yet.</p>
+      </div>
     );
   }
 
   const tree = buildBracketTree(knockoutMatches, teamNames);
 
   return (
-    <>
-      <PageHeader title={`Bracket — ${tournament.name}`} />
+    <div>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold text-gray-900">Bracket</h2>
+        <span className="text-sm text-gray-500">{played} of {total} matches played</span>
+      </div>
       <BracketView node={tree} teamNames={teamNames} />
-    </>
+    </div>
   );
 }
